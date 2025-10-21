@@ -192,59 +192,154 @@
             font-size: 1.5rem;
         }
 
-        .features {
+        .mongodb-section, .speedtest-section {
+            margin: 2.5rem 0;
             text-align: left;
-            margin: 2rem 0;
-            display: grid;
-            gap: 1rem;
         }
 
-        .feature {
+        .mongodb-section h2, .speedtest-section h2 {
+            color: var(--text-primary);
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .release-notes {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .release-item {
             background: var(--bg-secondary);
-            padding: 1.5rem;
+            padding: 2rem;
             border-radius: 16px;
-            border-left: 4px solid transparent;
-            background-clip: padding-box;
+            border-left: 4px solid #10b981;
             transition: var(--transition);
             position: relative;
             overflow: hidden;
         }
 
-        .feature::before {
+        .release-item::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             width: 4px;
             height: 100%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #10b981, #059669);
             transition: var(--transition);
         }
 
-        .feature:hover {
+        .release-item:hover {
             transform: translateX(5px);
             box-shadow: var(--shadow-light);
             background: var(--glass-bg);
             backdrop-filter: blur(10px);
         }
 
-        .feature:hover::before {
+        .release-item:hover::before {
             width: 6px;
         }
 
-        .feature h3 {
-            margin: 0 0 0.75rem 0;
+        .release-item h3 {
             color: var(--text-primary);
+            font-size: 1.3rem;
             font-weight: 600;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
+            margin: 0 0 0.5rem 0;
         }
 
-        .feature p {
+        .release-date {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 0 0 1rem 0;
+            font-style: italic;
+        }
+
+        .features-list {
+            list-style: none;
+            padding: 0;
             margin: 0;
+        }
+
+        .features-list li {
             color: var(--text-secondary);
-            line-height: 1.5;
+            margin: 0.5rem 0;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: var(--transition);
+        }
+
+        .features-list li:hover {
+            color: var(--text-primary);
+            transform: translateX(5px);
+        }
+
+        .features-list li:last-child {
+            border-bottom: none;
+        }
+
+        .speedtest-section {
+            text-align: center;
+            background: var(--glass-bg);
+            padding: 2rem;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .speedtest-section p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .speedtest-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .speedtest-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .speedtest-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .speedtest-button:hover::before {
+            left: 100%;
+        }
+
+        .button-icon {
+            font-size: 1.2rem;
+            transition: var(--transition);
+        }
+
+        .speedtest-button:hover .button-icon {
+            transform: scale(1.2);
         }
 
         .emoji {
@@ -330,16 +425,40 @@
             <p>We're working hard to bring you amazing features. Stay tuned!</p>
         </div>
         
-        <div class="features">
-            <div class="feature">
-                <h3><span class="emoji">📊</span>MongoDB Release Notes</h3>
-                <p>Stay updated with the latest MongoDB releases, features, and improvements.</p>
+        <div class="mongodb-section">
+            <h2><span class="emoji">📊</span>MongoDB Release Notes</h2>
+            <div class="release-notes">
+                <div class="release-item">
+                    <h3>MongoDB 7.0 - Latest Release</h3>
+                    <p class="release-date">Released: December 2023</p>
+                    <ul class="features-list">
+                        <li>🆕 Time Series Collections improvements</li>
+                        <li>🆕 Enhanced aggregation pipeline performance</li>
+                        <li>🆕 New query optimization features</li>
+                        <li>🔧 Improved security enhancements</li>
+                    </ul>
+                </div>
+                
+                <div class="release-item">
+                    <h3>MongoDB 6.0 - Previous Release</h3>
+                    <p class="release-date">Released: June 2022</p>
+                    <ul class="features-list">
+                        <li>🆕 Time Series Collections</li>
+                        <li>🆕 Change Streams improvements</li>
+                        <li>🆕 Enhanced sharding capabilities</li>
+                        <li>🔧 Performance optimizations</li>
+                    </ul>
+                </div>
             </div>
-            
-            <div class="feature">
-                <h3><span class="emoji">⚡</span>VM Speedtest</h3>
-                <p>Test and benchmark your virtual machine performance with our comprehensive speed testing tools.</p>
-            </div>
+        </div>
+        
+        <div class="speedtest-section">
+            <h2><span class="emoji">⚡</span>Internet Speed Test</h2>
+            <p>Test your internet connection speed and performance</p>
+            <a href="speedtest.html" class="speedtest-button">
+                <span class="button-icon">🚀</span>
+                Start Speed Test
+            </a>
         </div>
         
         <div class="coming-soon">
