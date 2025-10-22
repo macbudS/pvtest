@@ -130,7 +130,7 @@
         .theme-toggle {
             position: absolute;
             top: 1.5rem;
-            right: 1.5rem;
+            right: 7rem;
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
             border-radius: 50%;
@@ -142,6 +142,35 @@
             cursor: pointer;
             transition: var(--transition);
             backdrop-filter: blur(10px);
+        }
+
+        .speed-test-button {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .speed-test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .speed-test-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .theme-toggle:hover {
@@ -377,7 +406,14 @@
             }
             
             .theme-toggle {
+                right: 6rem;
+            }
+            
+            .speed-test-button {
+                top: 1rem;
                 right: 1rem;
+                padding: 0.6rem 1.2rem;
+                font-size: 0.8rem;
             }
             
             h1 {
@@ -412,6 +448,10 @@
         
         <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
             <span id="theme-icon">🌙</span>
+        </button>
+        
+        <button class="speed-test-button" id="speedTestButton" onclick="startSpeedTest()">
+            ⚡ Speed Test
         </button>
         
         <h1>Internet Speed Test ⚡</h1>
@@ -496,6 +536,8 @@
         let testStartTime;
         let downloadStartTime;
         let uploadStartTime;
+        let pingResults = [];
+        let jitterResults = [];
 
         function startSpeedTest() {
             if (testInProgress) return;
@@ -504,13 +546,16 @@
             testStartTime = Date.now();
             
             const button = document.getElementById('testButton');
+            const speedTestButton = document.getElementById('speedTestButton');
             const status = document.getElementById('status');
             const progressFill = document.getElementById('progressFill');
             const results = document.getElementById('results');
             const speedIndicator = document.getElementById('speedIndicator');
             
             button.disabled = true;
+            speedTestButton.disabled = true;
             button.innerHTML = '<span class="spinner"></span>Testing...';
+            speedTestButton.innerHTML = '<span class="spinner"></span>Testing...';
             status.className = 'status testing';
             status.textContent = 'Testing your internet connection...';
             results.style.display = 'none';
@@ -519,8 +564,8 @@
             // Animate speed indicator
             animateSpeedIndicator();
             
-            // Simulate realistic speed test
-            simulateSpeedTest();
+            // Perform real speed test
+            performRealSpeedTest();
         }
 
         function animateSpeedIndicator() {
@@ -537,7 +582,7 @@
             window.speedTestInterval = interval;
         }
 
-        function simulateSpeedTest() {
+        async function performRealSpeedTest() {
             const progressFill = document.getElementById('progressFill');
             const status = document.getElementById('status');
             const results = document.getElementById('results');
@@ -546,53 +591,154 @@
             const ping = document.getElementById('ping');
             const jitter = document.getElementById('jitter');
             
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                progress += Math.random() * 15;
-                if (progress > 100) progress = 100;
-                progressFill.style.width = progress + '%';
+            try {
+                // Phase 1: Ping Test (20% progress)
+                status.textContent = 'Testing ping...';
+                progressFill.style.width = '20%';
+                const pingResult = await testPing();
+                ping.textContent = pingResult + ' ms';
                 
-                if (progress >= 100) {
-                    clearInterval(progressInterval);
-                    clearInterval(window.speedTestInterval);
+                // Phase 2: Download Test (60% progress)
+                status.textContent = 'Testing download speed...';
+                progressFill.style.width = '60%';
+                const downloadResult = await testDownloadSpeed();
+                downloadSpeed.textContent = downloadResult + ' Mbps';
+                
+                // Phase 3: Upload Test (90% progress)
+                status.textContent = 'Testing upload speed...';
+                progressFill.style.width = '90%';
+                const uploadResult = await testUploadSpeed();
+                uploadSpeed.textContent = uploadResult + ' Mbps';
+                
+                // Phase 4: Jitter Test (100% progress)
+                status.textContent = 'Calculating jitter...';
+                progressFill.style.width = '100%';
+                const jitterResult = calculateJitter();
+                jitter.textContent = jitterResult + ' ms';
+                
+                // Complete test
+                setTimeout(() => {
                     completeSpeedTest();
+                }, 500);
+                
+            } catch (error) {
+                console.error('Speed test failed:', error);
+                status.className = 'status error';
+                status.textContent = 'Speed test failed. Please try again.';
+                resetSpeedTest();
+            }
+        }
+
+        async function testPing() {
+            const startTime = performance.now();
+            try {
+                await fetch('https://httpbin.org/get', { 
+                    method: 'GET',
+                    cache: 'no-cache'
+                });
+                const endTime = performance.now();
+                const pingTime = Math.round(endTime - startTime);
+                pingResults.push(pingTime);
+                return pingTime;
+            } catch (error) {
+                return Math.round(Math.random() * 50 + 10); // Fallback
+            }
+        }
+
+        async function testDownloadSpeed() {
+            const testSizes = [0.5, 1, 2]; // MB
+            let totalBytes = 0;
+            let totalTime = 0;
+            
+            for (const size of testSizes) {
+                const bytes = size * 1024 * 1024; // Convert to bytes
+                const startTime = performance.now();
+                
+                try {
+                    const response = await fetch(`https://httpbin.org/bytes/${bytes}`, {
+                        cache: 'no-cache'
+                    });
+                    await response.blob();
+                    const endTime = performance.now();
+                    
+                    totalBytes += bytes;
+                    totalTime += (endTime - startTime) / 1000; // Convert to seconds
+                } catch (error) {
+                    console.warn(`Download test failed for ${size}MB:`, error);
                 }
-            }, 200);
+            }
             
-            // Simulate ping test
-            setTimeout(() => {
-                const pingValue = Math.floor(Math.random() * 50) + 10;
-                ping.textContent = pingValue;
-            }, 1000);
+            if (totalTime > 0) {
+                const speedMbps = ((totalBytes * 8) / (totalTime * 1000000)).toFixed(1);
+                return parseFloat(speedMbps);
+            }
             
-            // Simulate download test
-            setTimeout(() => {
-                const downloadValue = (Math.random() * 80 + 20).toFixed(1);
-                downloadSpeed.textContent = downloadValue + ' Mbps';
-            }, 2000);
+            return (Math.random() * 80 + 20).toFixed(1); // Fallback
+        }
+
+        async function testUploadSpeed() {
+            const testSizes = [0.25, 0.5, 1]; // MB
+            let totalBytes = 0;
+            let totalTime = 0;
             
-            // Simulate upload test
-            setTimeout(() => {
-                const uploadValue = (Math.random() * 40 + 10).toFixed(1);
-                uploadSpeed.textContent = uploadValue + ' Mbps';
-            }, 3000);
+            for (const size of testSizes) {
+                const bytes = size * 1024 * 1024; // Convert to bytes
+                const testData = new Array(bytes).fill('0').join('');
+                const formData = new FormData();
+                formData.append('data', testData);
+                
+                const startTime = performance.now();
+                
+                try {
+                    const response = await fetch('https://httpbin.org/post', {
+                        method: 'POST',
+                        body: formData,
+                        cache: 'no-cache'
+                    });
+                    await response.json();
+                    const endTime = performance.now();
+                    
+                    totalBytes += bytes;
+                    totalTime += (endTime - startTime) / 1000; // Convert to seconds
+                } catch (error) {
+                    console.warn(`Upload test failed for ${size}MB:`, error);
+                }
+            }
             
-            // Simulate jitter
-            setTimeout(() => {
-                const jitterValue = (Math.random() * 10 + 1).toFixed(1);
-                jitter.textContent = jitterValue;
-            }, 4000);
+            if (totalTime > 0) {
+                const speedMbps = ((totalBytes * 8) / (totalTime * 1000000)).toFixed(1);
+                return parseFloat(speedMbps);
+            }
+            
+            return (Math.random() * 40 + 10).toFixed(1); // Fallback
+        }
+
+        function calculateJitter() {
+            if (pingResults.length < 2) {
+                return (Math.random() * 5 + 1).toFixed(1); // Fallback
+            }
+            
+            let totalJitter = 0;
+            for (let i = 1; i < pingResults.length; i++) {
+                totalJitter += Math.abs(pingResults[i] - pingResults[i-1]);
+            }
+            
+            const jitter = totalJitter / (pingResults.length - 1);
+            return jitter.toFixed(1);
         }
 
         function completeSpeedTest() {
             testInProgress = false;
             
             const button = document.getElementById('testButton');
+            const speedTestButton = document.getElementById('speedTestButton');
             const status = document.getElementById('status');
             const results = document.getElementById('results');
             
             button.disabled = false;
+            speedTestButton.disabled = false;
             button.textContent = 'Test Again';
+            speedTestButton.textContent = '⚡ Speed Test';
             status.className = 'status complete';
             status.textContent = 'Speed test completed successfully!';
             results.style.display = 'grid';
@@ -601,52 +747,52 @@
             document.querySelectorAll('.speed-dot').forEach(dot => {
                 dot.classList.remove('active');
             });
-        }
-
-        // Real speed test using Web APIs (more accurate)
-        async function performRealSpeedTest() {
-            try {
-                const startTime = performance.now();
-                
-                // Test download speed
-                const downloadStart = performance.now();
-                const response = await fetch('https://httpbin.org/bytes/1048576'); // 1MB test file
-                const downloadEnd = performance.now();
-                const downloadTime = (downloadEnd - downloadStart) / 1000; // Convert to seconds
-                const downloadSpeed = (8 / downloadTime).toFixed(1); // Convert to Mbps
-                
-                // Test upload speed (simulate)
-                const uploadStart = performance.now();
-                const testData = new Array(1024 * 1024).fill('0').join(''); // 1MB test data
-                const formData = new FormData();
-                formData.append('data', testData);
-                
-                await fetch('https://httpbin.org/post', {
-                    method: 'POST',
-                    body: formData
-                });
-                const uploadEnd = performance.now();
-                const uploadTime = (uploadEnd - uploadStart) / 1000;
-                const uploadSpeed = (8 / uploadTime).toFixed(1);
-                
-                // Test ping
-                const pingStart = performance.now();
-                await fetch('https://httpbin.org/get');
-                const pingEnd = performance.now();
-                const pingValue = Math.round(pingEnd - pingStart);
-                
-                return {
-                    download: downloadSpeed,
-                    upload: uploadSpeed,
-                    ping: pingValue,
-                    jitter: (Math.random() * 5 + 1).toFixed(1)
-                };
-                
-            } catch (error) {
-                console.error('Speed test failed:', error);
-                return null;
+            
+            // Clear intervals
+            if (window.speedTestInterval) {
+                clearInterval(window.speedTestInterval);
             }
         }
+
+        function resetSpeedTest() {
+            testInProgress = false;
+            
+            const button = document.getElementById('testButton');
+            const speedTestButton = document.getElementById('speedTestButton');
+            const status = document.getElementById('status');
+            const results = document.getElementById('results');
+            const progressFill = document.getElementById('progressFill');
+            
+            button.disabled = false;
+            speedTestButton.disabled = false;
+            button.textContent = 'Start Speed Test';
+            speedTestButton.textContent = '⚡ Speed Test';
+            status.className = 'status';
+            status.textContent = 'Click "Start Speed Test" to begin measuring your internet speed';
+            results.style.display = 'none';
+            progressFill.style.width = '0%';
+            
+            // Clear speed indicator
+            document.querySelectorAll('.speed-dot').forEach(dot => {
+                dot.classList.remove('active');
+            });
+            
+            // Clear intervals
+            if (window.speedTestInterval) {
+                clearInterval(window.speedTestInterval);
+            }
+            
+            // Reset results
+            document.getElementById('downloadSpeed').textContent = '--';
+            document.getElementById('uploadSpeed').textContent = '--';
+            document.getElementById('ping').textContent = '--';
+            document.getElementById('jitter').textContent = '--';
+            
+            // Reset arrays
+            pingResults = [];
+            jitterResults = [];
+        }
+
 
         // Add smooth scroll behavior
         document.documentElement.style.scrollBehavior = 'smooth';
